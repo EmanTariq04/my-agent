@@ -1,6 +1,7 @@
 import userModel from "../models/user.model.js";
 import * as userService from "../services/user.service.js";
 import { validationResult } from "express-validator";
+import redisClient from "../services/redis.service.js";
 
 export const createUserController = async (req, res) => {
   const errors = validationResult(req);
@@ -36,7 +37,7 @@ export const loginController = async (req, res) => {
       });
     }
 
-    const isMatch = await user.isValidPssword(password);
+    const isMatch = await user.isValidPassword(password);
 
     if (!isMatch) {
       return res.status(401).json({
@@ -44,7 +45,10 @@ export const loginController = async (req, res) => {
       });
     }
 
-    const token = await user.generateJWT();
+    const token = user.generateJWT();
+    console.log("Generated Token for Response:", token)
+
+    res.cookie("token", token, { httpOnly: true });
 
     res.status(200).json({ user, token });
   } catch (error) {
@@ -58,4 +62,25 @@ export const profileController = async (req, res) => {
   res.status(200).json({
     user: req.user,
   });
+};
+
+export const logoutController = async (req, res) => {
+  try {
+    const token = req.cookies.token || req.headers.authorization.split(" ")[1];
+
+    if (!token) {
+      return res.status(400).json({ error: "No token found" })
+    }
+
+    await redisClient.set(token, "logout", "EX", 60 * 60 * 24);
+
+    res.clearCookie("token", { httpOnly: true, secure: false });
+
+    res.status(200).json({
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.log(err);
+    res.status(400).send(err.message);
+  }
 };

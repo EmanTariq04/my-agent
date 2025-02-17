@@ -23,6 +23,16 @@ router.post(
   userController.loginController
 );
 
-router.get("/profile", authMiddlware.authUser, userController.profileController);
+router.get(
+  "/profile",
+  authMiddlware.authUser,
+  userController.profileController
+);
+
+router.get(
+  "/logout",
+  authMiddlware.authUser,
+  userController.logoutController
+);
 
 export default router;

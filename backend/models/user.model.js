@@ -23,12 +23,16 @@ userSchema.statics.hashPassword = async function (password) {
   return await bcrypt.hash(password, 10);
 };
 
-userSchema.methods.isValidPssword = async function (password) {
+userSchema.methods.isValidPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.generateJWT = function () {
-  return jwt.sign({ email: this.email }, process.env.JWT_SECRET);
+  const token = jwt.sign({ email: this.email }, process.env.JWT_SECRET, {
+    expiresIn: "24h",
+  });
+  console.log("Generated Token:", token);
+  return token;a
 };
 
 const user = mongoose.model("user", userSchema);
