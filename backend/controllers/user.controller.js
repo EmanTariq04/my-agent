@@ -14,6 +14,8 @@ export const createUserController = async (req, res) => {
 
     const token = await user.generateJWT();
 
+    delete user._doc.password;
+
     res.status(201).json({ user, token });
   } catch (error) {
     res.status(400).json(error.message);
@@ -46,7 +48,8 @@ export const loginController = async (req, res) => {
     }
 
     const token = user.generateJWT();
-    console.log("Generated Token for Response:", token)
+    delete user._doc.password;
+    console.log("Generated Token for Response:", token);
 
     res.cookie("token", token, { httpOnly: true });
 
@@ -69,7 +72,7 @@ export const logoutController = async (req, res) => {
     const token = req.cookies.token || req.headers.authorization.split(" ")[1];
 
     if (!token) {
-      return res.status(400).json({ error: "No token found" })
+      return res.status(400).json({ error: "No token found" });
     }
 
     await redisClient.set(token, "logout", "EX", 60 * 60 * 24);
