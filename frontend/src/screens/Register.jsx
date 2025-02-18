@@ -16,7 +16,7 @@ const Register = () => {
       .post("/users/register", {
         email,
         password,
-      }) 
+      })
       .then((res) => {
         console.log(res.data);
         localStorage.setItem("token", res.data.token);

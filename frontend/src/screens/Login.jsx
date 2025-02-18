@@ -20,8 +20,8 @@ export default function LoginForm() {
       .then((res) => {
         console.log(res.data);
 
-        localStorage.setItem('token', res.data.token)
-        setUser(res.data.user)
+        localStorage.setItem("token", res.data.token);
+        setUser(res.data.user);
         navigate("/");
       })
       .catch((err) => {
