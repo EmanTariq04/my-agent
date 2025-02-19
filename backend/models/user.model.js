@@ -32,7 +32,8 @@ userSchema.methods.generateJWT = function () {
     expiresIn: "24h",
   });
   console.log("Generated Token:", token);
-  return token;a
+  return token;
+  a;
 };
 
 const user = mongoose.model("user", userSchema);
