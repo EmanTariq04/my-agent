@@ -4,7 +4,8 @@ import { useLocation } from "react-router-dom";
 const Project = () => {
   const location = useLocation();
 
-  console.log(location.state);
+  console.log(location.state); 
+
 
   return (
     <main className="h-screen w-screen flex">
