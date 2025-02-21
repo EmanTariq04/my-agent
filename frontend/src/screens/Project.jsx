@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { data, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "../config/axios.js";
 import {
   initializeSocket,
@@ -7,6 +7,21 @@ import {
   sendMessage,
 } from "../config/socket.js";
 import { UserContext } from "../context/user.context";
+import Markdown from "markdown-to-jsx";
+
+function SyntaxHighlightedCode(props) {
+  const ref = useRef(null);
+
+  React.useEffect(() => {
+    if (ref.current && props.className?.includes("lang-") && window.hljs) {
+      window.hljs.highlightElement(ref.current);
+
+      ref.current.removeAttribute("data-highlighted");
+    }
+  }, [props.className, props.children]);
+
+  return <code {...props} ref={ref} />;
+}
 
 const Project = () => {
   const location = useLocation();
@@ -17,8 +32,9 @@ const Project = () => {
   const [users, setUsers] = useState([]);
   const [project, setProject] = useState(location.state.project);
   const [message, setMessage] = useState("");
-
+  const [messages, setMessages] = useState([]);
   const { user } = useContext(UserContext);
+  const messageBox = React.createRef();
 
   const handleUserClick = (id) => {
     setSelectedUserId((prevSelectedUserId) => {
@@ -51,7 +67,7 @@ const Project = () => {
     console.log(user);
     sendMessage("project-message", {
       message,
-      sender: user._id,
+      sender: user,
     });
 
     setMessage("");
@@ -79,8 +95,6 @@ const Project = () => {
         console.log(err);
       });
   }, []);
-
-  console.log(location.state);
 
   return (
     <main className="h-screen w-screen flex">
