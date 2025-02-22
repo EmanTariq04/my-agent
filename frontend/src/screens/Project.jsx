@@ -8,6 +8,8 @@ import {
 } from "../config/socket.js";
 import { UserContext } from "../context/user.context";
 import Markdown from "markdown-to-jsx";
+import hljs from "highlight.js";
+import { getWebContainer } from "../config/webContainer.js";
 
 function SyntaxHighlightedCode(props) {
   const ref = useRef(null);
@@ -33,6 +35,12 @@ const Project = () => {
   const [project, setProject] = useState(location.state.project);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [fileTree, setFileTree] = useState("");
+  const [currentFile, setCurrentFile] = useState(null);
+  const [openFiles, setOpenFiles] = useState([]);
+  const [webContainer, setWebContainer] = useState(null);
+  const [iframeUrl, setIframeUrl] = useState(null);
+  const [runProcess, setRunProcess] = useState(null);
   const { user } = useContext(UserContext);
   const messageBox = React.createRef();
 
@@ -64,28 +72,63 @@ const Project = () => {
   }
 
   const send = () => {
-    console.log(user);
     sendMessage("project-message", {
       message,
       sender: user,
     });
-
+    setMessages((prevMessages) => [...prevMessages, { sender: user, message }]);
     setMessage("");
   };
+
+  function WriteAiMessage(message) {
+    const messageObject = JSON.parse(message);
+
+    return (
+      <div className="overflow-auto bg-slate-950 text-white rounded-sm p-2">
+        <Markdown
+          children={messageObject.text}
+          options={{
+            overrides: {
+              code: SyntaxHighlightedCode,
+            },
+          }}
+        />
+      </div>
+    );
+  }
 
   useEffect(() => {
     initializeSocket(project._id);
 
+    if (!webContainer) {
+      getWebContainer().then((container) => {
+        setWebContainer(container);
+        console.log("container started");
+      });
+    }
+
     receiveMessage("project-message", (data) => {
       console.log(data);
+      if (data.sender._id == "ai") {
+        const message = JSON.parse(data.message);
+        console.log(message);
+        webContainer?.mount(message.fileTree);
+        if (message.fileTree) {
+          setFileTree(message.fileTree || {});
+        }
+        setMessages((prevMessages) => [...prevMessages, data]); //
+      } else {
+        setMessages((prevMessages) => [...prevMessages, data]); //
+      }
     });
+    axios
+      .get(`/projects/get-project/${location.state.project._id}`)
+      .then((res) => {
+        console.log(res.data.project);
+        setProject(res.data.project);
+        setFileTree(res.data.project.fileTree || {});
+      });
 
-    axios.get(`/projects/get-projects/${location.state.project._id}`);
-    console.log(res.data.project);
-    setProject(res.data.project);
-  });
-
-  useEffect(() => {
     axios
       .get("/users/all")
       .then((res) => {
@@ -95,6 +138,24 @@ const Project = () => {
         console.log(err);
       });
   }, []);
+
+  function saveFileTree(ft) {
+    axios
+      .put("/projects/update-file-tree", {
+        projectId: project._id,
+        fileTree: ft,
+      })
+      .then((res) => {
+        console.log(res.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  }
+
+  function scrollToBottom() {
+    messageBox.current.scrollTop = messageBox.current.scrollHeight;
+  }
 
   return (
     <main className="h-screen w-screen flex">

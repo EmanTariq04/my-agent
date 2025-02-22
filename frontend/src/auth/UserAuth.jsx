@@ -9,23 +9,21 @@ const UserAuth = ({ children }) => {
 
   const navigate = useNavigate();
 
-  if (user) {
-    setLoading(false);
-  }
+  useEffect(() => {
+    if (user) {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!token || !user) {
+      navigate("/login");
+    }
+  }, [token, user, navigate]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
-
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-    }
-
-    if (!user) {
-      navigate("/login");
-    }
-  }, []);
 
   return <>{children}</>;
 };
